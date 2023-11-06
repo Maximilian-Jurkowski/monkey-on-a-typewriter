@@ -5,22 +5,32 @@ import random,string,argparse,concurrent.futures,multiprocessing,os
 def monkey_typer(args,found_cat,charset,match_length,charset_length,p,t):
     monkey_word = str()
     attempts = 0
+    print(f'Started P{p}T{t}')
     while monkey_word != args.match and not found_cat.value:
         monkey_word = str()
-        for _ in range(0,match_length):
+        for _ in range(match_length):
             monkey_word += charset[random.randint(0,charset_length)]
         if monkey_word == args.match:
+            print(f'Ending P{p}T{t}')            
             found_cat.value = 1
         attempts+=1
     return attempts
 
 def mProc(args,found_cat,charset,match_length,charset_length):
     with concurrent.futures.ProcessPoolExecutor(max_workers=args.processes) as pexec:
-        return [ pexec.submit(mThread,args,found_cat,charset,match_length,charset_length,p).result() for p in range(args.processes) ]
+        x = [ pexec.submit(mThread,args,found_cat,charset,match_length,charset_length,p) for p in range(args.processes) ]
+        a = list()
+        for i in x:
+            a.append(i.result())
+        return a
 
 def mThread(args,found_cat,charset,match_length,charset_length,p):
     with concurrent.futures.ThreadPoolExecutor(max_workers=args.threads) as texec:
-        return [ texec.submit(monkey_typer,args,found_cat,charset,match_length,charset_length,p,t).result() for t in range(args.threads) ]
+        x = [ texec.submit(monkey_typer,args,found_cat,charset,match_length,charset_length,p,t) for t in range(args.threads) ]
+        a = list()
+        for i in x:
+            a.append(i.result())
+        return a
 
 def main(args):
     charset=str()
